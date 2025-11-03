@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎞️ The Wallet and the Whisper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 25px;
+            border-radius: 50px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .audio-player:hover {
+            box-shadow: 0 15px 50px rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .play-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .audio-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .audio-title {
+            font-size: 0.9rem;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .audio-subtitle {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        /* Landing Page */
+        .landing {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+        }
+
+        .landing::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+
+        .landing::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .landing-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .landing h1 {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInDown 1s ease-out;
+            font-weight: 800;
+            letter-spacing: -2px;
+        }
+
+        .landing .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out 0.3s both;
+            color: #9ca3af;
+            font-weight: 300;
+        }
+
+        .scroll-hint {
+            animation: bounce 2s infinite 1s;
+            font-size: 3rem;
+            margin-top: 40px;
+            color: #8b5cf6;
+            filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
+            cursor: pointer;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Comic Panels */
+        .comic-section {
+            background: #0a0a0f;
+            padding: 100px 20px;
+            position: relative;
+        }
+
+        .comic-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(to bottom, #1a1a2e, transparent);
+        }
+
+        .panel-container {
+            max-width: 1200px;
+            margin: 0 auto 150px;
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .panel {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .panel-number {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.8rem;
+            z-index: 10;
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Image container for positioning */
+        .image-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .panel-image {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            display: block;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            position: relative;
+        }
+
+        .caption-area {
+            position: absolute;
+            padding: 20px 25px;
+            border-radius: 20px;
+            color: #e0e0e0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 45%;
+            opacity: 0;
+            transform: translateY(-80px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 5;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .panel-container.visible .caption-area {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Ethan's speech bubbles (left side) */
+        .caption-area.left {
+        background: linear-gradient(
+            135deg,
+            rgba(139, 92, 246, 0.7) 0%,   /* purple with 70% opacity */
+            rgba(99, 102, 241, 0.7) 100%  /* indigo with 70% opacity */
+        );
+        left: 5%;
+        top: 15%;
+        border-bottom-left-radius: 4px;
+        
+    }
+
+
+        .caption-area.left::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 30px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 15px solid #6366f1;
+            transform: rotate(-15deg);
+        }
+
+        /* Other characters' bubbles (right side) */
+        .caption-area.right {
+        background: linear-gradient(
+            135deg,
+            rgba(236, 72, 153, 0.7) 0%,   /* pink */
+            rgba(244, 63, 94, 0.7) 100%   /* red-pink */
+        );
+        right: 5%;
+        top: 15%;
+        border-bottom-right-radius: 4px;
+        
+    }
+
+
+        .caption-area.right::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 30px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 15px solid #f43f5e;
+            transform: rotate(15deg);
+        }
+
+        /* Inner thought bubbles (centered, slightly different style) */
+        .caption-area.thought {
+        background: linear-gradient(
+            135deg,
+            rgba(251, 191, 36, 0.7) 0%,   /* yellow */
+            rgba(245, 158, 11, 0.7) 100%  /* orange */
+        );
+        left: 50%;
+        transform: translateX(-50%) translateY(-80px);
+        top: 10%;
+        border-radius: 25px;
+        max-width: 60%;
+        }
+
+        .panel-container.visible .caption-area.thought {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .caption-area.thought::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 15px;
+            height: 15px;
+            background: #f59e0b;
+            border-radius: 50%;
+            box-shadow: -25px 10px 0 -5px #f59e0b, -35px 18px 0 -8px #f59e0b;
+        }
+
+        /* Reflection Section */
+        .reflection-section {
+            background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%);
+            padding: 120px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .reflection-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .reflection-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 60px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .reflection-container h2 {
+            font-size: 3rem;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        .reflection-text {
+            background: rgba(22, 33, 62, 0.8);
+            color: #e0e0e0;
+            padding: 40px;
+            border-radius: 16px;
+            font-size: 1.25rem;
+            line-height: 2;
+            text-align: left;
+            min-height: 180px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background: #0a0a0f;
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        footer p:first-child {
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin-bottom: 10px;
+        }
+
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .landing h1 {
+                font-size: 2.5rem;
+            }
+            .landing .subtitle {
+                font-size: 1.1rem;
+            }
+            .panel-container {
+                margin-bottom: 80px;
+            }
+            .panel {
+                padding: 25px;
+            }
+            .panel-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+                top: 20px;
+                left: 20px;
+            }
+            .reflection-container {
+                padding: 35px 25px;
+            }
+            .reflection-container h2 {
+                font-size: 2rem;
+            }
+            .audio-player {
+                bottom: 20px;
+                right: 20px;
+                padding: 15px 20px;
+            }
+            .play-btn {
+                width: 40px;
+                height: 40px;
+            }
+            .caption-area {
+                max-width: 90%;
+                font-size: 0.9rem;
+                padding: 12px 16px;
+                position: relative;
+            }
+            
+            /* Remove bubble tails on mobile */
+            .caption-area.left::after,
+            .caption-area.right::after,
+            .caption-area.thought::after {
+                display: none;
+            }
+            
+            /* Add character labels before text */
+            .caption-area.left::before {
+                content: 'Ethan: ';
+                font-weight: 700;
+                color: #a78bfa;
+            }
+            
+            .caption-area.right::before {
+                content: 'Conscience: ';
+                font-weight: 700;
+                color: #f9a8d4;
+            }
+            
+            .caption-area.thought::before {
+                content: 'Ethan (thinking): ';
+                font-weight: 700;
+                color: #fcd34d;
+                font-style: italic;
+            }
+            
+            /* Ethan's dialogue (left) and thoughts - appear ABOVE image */
+            .caption-area.left,
+            .caption-area.thought {
+                position: relative;
+                top: auto;
+                order: -1; /* Moves to top */
+                margin-bottom: 15px;
+                margin-top: 0;
+                border-radius: 12px;
+                margin-left: 70px; /* Add space to avoid panel number */
+                margin-right: 5%;
+            }
+            
+            .caption-area.left {
+                left: 0;
+                right: auto;
+            }
+            
+            .caption-area.thought {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            /* Other characters (right) - appear BELOW image */
+            .caption-area.right {
+                position: relative;
+                top: auto;
+                right: auto;
+                left: 5%;
+                order: 1; /* Stays at bottom */
+                margin-top: 15px;
+                margin-bottom: 0;
+                border-radius: 12px;
+            }
+            
+            /* Make image container flexbox to allow reordering */
+            .image-container {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* Ensure image stays in middle */
+            .panel-image {
+                order: 0;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- Audio Player -->
+    <div class="audio-player">
+        <button class="play-btn" id="playBtn">▶</button>
+        <div class="audio-info">
+            <div class="audio-title">Background Music</div>
+            <div class="audio-subtitle">Click to play/pause</div>
+        </div>
+        <audio id="bgMusic" loop>
+            <source src="assets/audio/Heuristics For The Brain - pATCHES.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Landing Page -->
+    <section class="landing">
+        <div class="landing-content">
+            <h1>🎞️ The Wallet and the Whisper</h1>
+            <p class="subtitle">A Philosophy 101 Journey on Morality and Conscience</p>
+            <p>Made By: Matt Renzo C. Baring - BSIT SE III</p>
+            <p style="font-size: 1rem; color: #8b5cf6; margin-top: 20px; opacity: 0.8;">Scroll to start reading</p>
+            <div class="scroll-hint">↓</div>
+        </div>
+    </section>
+
+    <!-- Comic Panels -->
+    <section class="comic-section">
+        <!-- Panel 1 -->
+        <div class="panel-container" data-panel="1">
+            <div class="panel">
+                <div class="panel-number">1</div>
+                <div class="image-container">
+                    <img src="assets/images/1.png" alt="Panel 1" class="panel-image">
+                    <div class="caption-area left">
+                        "Hey, My Name's Ethan! and today is my lucky day!"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2 -->
+        <div class="panel-container" data-panel="2">
+            <div class="panel">
+                <div class="panel-number">2</div>
+                <div class="image-container">
+                    <img src="assets/images/2.png" alt="Panel 2" class="panel-image">
+                    <div class="caption-area left">
+                        "Huh? What's that on the floor?"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 3 -->
+        <div class="panel-container" data-panel="3">
+            <div class="panel">
+                <div class="panel-number">3</div>
+                <div class="image-container">
+                    <img src="assets/images/3.png" alt="Panel 3" class="panel-image">
+                    <div class="caption-area left">
+                        He glances around no one seems to notice.
+                        <br>"There's… a lot of money in here."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 4 -->
+        <div class="panel-container" data-panel="4">
+            <div class="panel">
+                <div class="panel-number">4</div>
+                <div class="image-container">
+                    <img src="assets/images/4.png" alt="Panel 4" class="panel-image">
+                    <div class="caption-area thought">
+                        "I could use this for my project... it's just sitting here."
+                    </div>
+                    <div class="caption-area right" style="top: 40%; transition-delay: 0.3s;">
+                        "You know that isn't yours, Ethan."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 5 -->
+        <div class="panel-container" data-panel="5">
+            <div class="panel">
+                <div class="panel-number">5</div>
+                <div class="image-container">
+                    <img src="assets/images/5.png" alt="Panel 5" class="panel-image">
+                    <div class="caption-area thought">
+                        "If I used it... maybe I could finally finish my project."
+                    </div>
+                    <div class="caption-area right" style="top: 40%; transition-delay: 0.3s;">
+                        "But would it still feel right?"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 6 -->
+        <div class="panel-container" data-panel="6">
+            <div class="panel">
+                <div class="panel-number">6</div>
+                <div class="image-container">
+                    <img src="assets/images/6.png" alt="Panel 6" class="panel-image">
+                    <div class="caption-area left">
+                        "What if I never find the owner?"
+                    </div>
+                    <div class="caption-area right" style="top: 40%; transition-delay: 0.3s;">
+                        "Doing what's right isn't always easy, but it's always right."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 7 -->
+        <div class="panel-container" data-panel="7">
+            <div class="panel">
+                <div class="panel-number">7</div>
+                <div class="image-container">
+                    <img src="assets/images/7.png" alt="Panel 7" class="panel-image">
+                    <div class="caption-area left">
+                        "Hi, someone dropped this. I found it yesterday."
+                    </div>
+                    <div class="caption-area right" style="top: 40%; transition-delay: 0.3s;">
+                        "Thank you! The owner's been worried sick."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 8 -->
+        <div class="panel-container" data-panel="8">
+            <div class="panel">
+                <div class="panel-number">8</div>
+                <div class="image-container">
+                    <img src="assets/images/8.png" alt="Panel 8" class="panel-image">
+                    <div class="caption-area thought">
+                        "It feels… lighter. Like a weight lifted."
+                    </div>
+                    <div class="caption-area right" style="top: 45%; transition-delay: 0.3s; font-style: italic; font-size: 0.95rem;">
+                        (whisper) "That's the peace that follows doing right."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 9 -->
+        <div class="panel-container" data-panel="9">
+            <div class="panel">
+                <div class="panel-number">9</div>
+                <div class="image-container">
+                    <img src="assets/images/9.png" alt="Panel 9" class="panel-image">
+                    <div class="caption-area thought">
+                        "Maybe honesty isn't about rules it's about who I choose to be."
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reflection Section -->
+    <section class="reflection-section">
+        <div class="reflection-container">
+            <h2>✨ Moral Reflection</h2>
+            <div class="reflection-text">
+                <strong>"This comic shows how my conscience guided me to..."</strong>
+                <br><br>
+                ...do what's right even when no one is watching. I realized that returning something that isn't mine not only helps others but also gives me peace of mind. Doing the honest thing strengthened my belief that integrity defines who we truly are.
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Philosophy 101 Activity: Comic Strip on Morality and Conscience</p>
+        <p>Made By: Matt Renzo C. Baring - BSIT SE III</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">Created with creativity and guided by conscience 🌟</p>
+    </footer>
+
+    <script>
+        // Audio Player Functionality
+        const playBtn = document.getElementById('playBtn');
+        const bgMusic = document.getElementById('bgMusic');
+        let isPlaying = false;
+        let hasScrolled = false;
+
+        // Auto-play music on first scroll
+        window.addEventListener('scroll', () => {
+            if (!hasScrolled && window.scrollY > 100) {
+                hasScrolled = true;
+                bgMusic.play().then(() => {
+                    isPlaying = true;
+                    playBtn.textContent = '⏸';
+                }).catch(err => {
+                    console.log('Auto-play blocked:', err);
+                });
+            }
+        });
+
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                bgMusic.pause();
+                playBtn.textContent = '▶';
+            } else {
+                bgMusic.play();
+                playBtn.textContent = '⏸';
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // Scroll animation for panels
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.panel-container').forEach(panel => {
+            observer.observe(panel);
+        });
+
+        // Smooth scroll for landing page hint
+        document.querySelector('.scroll-hint').addEventListener('click', () => {
+            document.querySelector('.comic-section').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        });
+    </script>
+</body>
+</html>
