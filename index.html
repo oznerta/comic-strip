@@ -593,8 +593,8 @@
             <h1>🎞️ The Wallet and the Whisper</h1>
             <p class="subtitle">A Philosophy 101 Journey on Morality and Conscience</p>
             <p>Made By: Matt Renzo C. Baring - BSIT SE III</p>
-            <p style="font-size: 1rem; color: #8b5cf6; margin-top: 20px; opacity: 0.8;">Scroll to start reading</p>
-            <div class="scroll-hint">↓</div>
+            <p style="font-size: 1rem; color: #8b5cf6; margin-top: 20px; opacity: 0.8;">Play the music for better experience</p>
+            <div class="scroll-hint">↓ Click Here to Start Reading ↓</div>
         </div>
     </section>
 
@@ -762,7 +762,7 @@
 
         // Auto-play music on first scroll
         window.addEventListener('scroll', () => {
-            if (!hasScrolled && window.scrollY > 100) {
+            if (!hasScrolled && window.scrollY > 0) {
                 hasScrolled = true;
                 bgMusic.play().then(() => {
                     isPlaying = true;
